@@ -10,13 +10,12 @@ var mongoose = require("mongoose");
 // Requiring our Note and Article models
 var Note = require("./models/Note.js");
 var Article = require("./models/Article.js");
-
 // Our scraping tools
 var request = require("request");
 var cheerio = require("cheerio");
-
 // Set mongoose to leverage built in JavaScript ES6 Promises
 mongoose.Promise = Promise;
+
 
 // Initialize Express
 var app = express();
@@ -30,14 +29,14 @@ app.use(bodyParser.urlencoded({
 // Make public a static dir
 app.use(express.static("public"));
 
-// Set Handlebars
+//Set handlebars
 var exphbs = require("express-handlebars");
 
 app.engine("handlebars", exphbs({ defaultLayout: "main" }));
 app.set("view engine", "handlebars");
 
 // Database configuration with mongoose
-mongoose.connect("mongodb://localhost/articlescrapperdb");
+mongoose.connect("mongodb://localhost/artscrapperdb");
 var db = mongoose.connection;
 
 // Show any mongoose errors
@@ -57,11 +56,11 @@ db.once("open", function() {
 // A GET request to scrape the echojs website
 app.get("/scrape", function(req, res) {
   // First, we grab the body of the html with request
-  request("http://www.echojs.com/", function(error, response, html) {
+  request("https://www.nytimes.com/", function(error, response, html) {
     // Then, we load that into cheerio and save it to $ for a shorthand selector
     var $ = cheerio.load(html);
     // Now, we grab every h2 within an article tag, and do the following:
-    $("article h2").each(function(i, element) {
+    $("h2").each(function(i, element) {
 
       // Save an empty result object
       var result = {};
@@ -92,6 +91,15 @@ app.get("/scrape", function(req, res) {
   res.send("Scrape Complete");
 });
 
+//added handlebars render
+app.get("/home", function(req, res) {
+  Article.find({}).then(function(results) {
+    var data = {
+      Articles: results
+    };
+    res.render("index", data);
+  });
+});
 
 // This will get the articles we scraped from the mongoDB
 app.get("/articles", function(req, res) {
@@ -107,17 +115,6 @@ app.get("/articles", function(req, res) {
     }
   });
 });
-
-// Added Handlebars Render Here
-app.get("/bullshit", function(req, res) {
-  Article.find({}).then(function(results) {
-    var data = {
-      Article: results
-    };
-    res.render("index", data);
-  });
-});
-
 
 // Grab an article by it's ObjectId
 app.get("/articles/:id", function(req, res) {
@@ -171,6 +168,6 @@ app.post("/articles/:id", function(req, res) {
 
 
 // Listen on port 3000
-app.listen(3000, function() {
+app.listen(8080, function() {
   console.log("App running on port 3000!");
 });
